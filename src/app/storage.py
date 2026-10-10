@@ -1,40 +1,47 @@
 #storage.py
-import os
 import json
-from src.config import ACC_DATA, TXN_DATA
+import os
+
 from src.app.models import Account, Transaction
+from src.config import ACC_DATA, TXN_DATA
+
 
 def ensure_files():
-    """Ensure data/accounts.json and data/transaction.json is present in the directory"""
-    os.makedirs('data', exist_ok=True)
+    """Ensure data/accounts.json and data/transactions.json are present in the directory."""
+    os.makedirs("data", exist_ok=True)
 
-    for i in(ACC_DATA, TXN_DATA):
-        if not os.path.exists(i):
-            with open(i, "w") as file:
+    for path in (ACC_DATA, TXN_DATA):
+        if not os.path.exists(path) or os.path.getsize(path) == 0:
+            with open(path, "w") as file:
                 json.dump([], file, indent=4)
 
-def load_accounts() -> list[Account]:
-    """Loads every account details from data/accounts.json into a python supported data type"""
 
-    with open(ACC_DATA, 'r') as f:
+def load_accounts() -> list[Account]:
+    """Load every account detail from data/accounts.json into a Python-supported data type."""
+    if not os.path.exists(ACC_DATA) or os.path.getsize(ACC_DATA) == 0:
+        return []
+
+    with open(ACC_DATA, "r") as f:
         result = json.load(f)
 
     return [Account.from_dict(data) for data in result]
 
-def save_accounts(accounts: list[Account]):
-    """Save account details in to data/accounts.json"""
 
-    with open(ACC_DATA, 'w') as f:
+def save_accounts(accounts: list[Account]):
+    """Save account details into data/accounts.json."""
+    ensure_files()
+
+    with open(ACC_DATA, "w") as f:
         json.dump([a.to_dict() for a in accounts], f, indent=4)
 
+
 def save_transaction(txn: Transaction):
-    """Save transaction details into data/transactions.json"""
+    """Save transaction details into data/transactions.json."""
+    ensure_files()
 
-    # get all the txns from the json file into a list
     with open(TXN_DATA, "r") as f:
-        data = list(json.load(f))
+        data = json.load(f) if os.path.getsize(TXN_DATA) > 0 else []
 
-    # add new txn to the list of all txns
     data.append(txn.to_dict())
 
     with open(TXN_DATA, "w") as f:
